@@ -1,6 +1,5 @@
 `define DRIV_MAC inf_vir.DRIVER.drv
 class driver;
-  //variable is declared to count number of transactors
   //virtual interface is declared
   virtual inf inf_vir;
   mailbox gen2drv;
