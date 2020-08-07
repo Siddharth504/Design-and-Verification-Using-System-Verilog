@@ -1,0 +1,15 @@
+`include "environment.sv"
+program  automatic test(inf intf);
+  //declaring environment
+ environment env;
+  initial
+   begin
+    env=new(intf);
+   env.gen.repeat_count=8;
+    env.reset;
+    env.build;
+    env.run;
+     #2;
+    env.scb.coverage;
+   end
+endprogram:test
