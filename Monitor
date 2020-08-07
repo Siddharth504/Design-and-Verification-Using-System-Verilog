@@ -1,0 +1,36 @@
+`define MON_MAC inf_vir.MONITOR
+class monitor;
+  virtual inf inf_vir;
+  transactor trans;
+  mailbox mon2scb;
+  function new(virtual inf inf_vir,mailbox mon2scb);
+    //gettimg interface handles from environment
+    this.inf_vir=inf_vir;
+    this.mon2scb=mon2scb;
+  endfunction
+  function void build;
+    $display("monitor build task completes");
+  endfunction:build
+    task run;
+      $display("Enters monitor");
+      forever 
+        begin
+          trans =new();
+         @(posedge inf_vir.clk);  
+    
+             #1;
+          $display("%d:Enters monitor run task",$time);
+                 trans.push=`MON_MAC.mon.push;
+                 trans.pop=`MON_MAC.mon.pop;
+                 trans.fifo_full=`MON_MAC.mon.fifo_full;
+                 trans.fifo_empty=`MON_MAC.mon.fifo_empty;
+                 trans.data_out=`MON_MAC.mon.data_out;
+                 trans.data_in=`MON_MAC.mon.data_in;
+                 trans.err1=`MON_MAC.mon.err1;
+                 trans.err2=`MON_MAC.mon.err2;
+                 trans.err3=`MON_MAC.mon.err3;
+                 mon2scb.put(trans);
+          $display("%d:Exists monitor err1=%d, err2=%d,push=%d,pop=%d,data_in=%d fifoempty=%d,fifofull=%d",$time,`MON_MAC.mon.err1,`MON_MAC.mon.err2,`MON_MAC.mon.push,`MON_MAC.mon.pop,`MON_MAC.mon.data_in,`MON_MAC.mon.fifo_empty,`MON_MAC.mon.fifo_full);
+        end
+ endtask:run
+endclass:monitor
