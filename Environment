@@ -1,0 +1,57 @@
+`include "transactor.sv"
+`include "generator.sv"
+`include "driver.sv"
+`include "monitor.sv"
+`include "scoreboard.sv"
+class environment;
+//instance declaration
+  generator gen;
+  driver drv;
+  monitor mon;
+  scoreboard scb;
+  // declaring events
+  event ended;
+//mailbox declaration
+  mailbox gen2drv;
+  mailbox mon2scb;
+//virtual handle
+  virtual inf inf_vir;
+//constructor
+  function new(virtual inf inf_vir);
+    this.inf_vir=inf_vir;
+//mailbox declaration
+    mon2scb=new;
+    gen2drv=new;
+//creating all the classes
+    gen=new(gen2drv,ended);
+    drv=new(inf_vir,gen2drv,ended);
+    mon=new(inf_vir,mon2scb);
+    scb=new(inf_vir,mon2scb);
+  endfunction
+//initial task
+  task reset;
+    fork
+    drv.reset();
+    scb.reset();      
+    join
+     $display("environment reset task completes");
+  endtask:reset
+  task build;
+    fork
+    gen.build;
+    drv.build;
+    mon.build;
+    scb.build; 
+    join
+     $display("environment build task completes");
+  endtask:build
+  task run;
+    fork
+        gen.run;
+        drv.run;
+        mon.run;
+        scb.run;
+    join_any
+    $display("environment run task completes");
+  endtask:run
+endclass:environment
