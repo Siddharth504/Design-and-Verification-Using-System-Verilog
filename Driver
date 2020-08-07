@@ -1,0 +1,51 @@
+`define DRIV_MAC inf_vir.DRIVER.drv
+class driver;
+  //variable is declared to count number of transactors
+  //event ready;
+  //virtual interface is declared
+  virtual inf inf_vir;
+  mailbox gen2drv;
+  int transaction;
+  event ended;
+ 
+   //constructor
+  function new(virtual inf inf_vir,mailbox gen2drv,event ended);
+    //gettimg interface and mailbox handles from environment
+    this.inf_vir=inf_vir;
+    this.gen2drv=gen2drv;
+    this.ended=ended;
+    
+  endfunction:new
+  task reset();
+    wait (inf_vir.reset);
+    $display("%d:reset starts of driver",$time);
+      `DRIV_MAC.push<=0;
+      `DRIV_MAC.pop<=0;
+      `DRIV_MAC.data_in<=0;
+     wait (inf_vir.reset==0);
+    $display("%d:reset done of driver",$time);
+ endtask:reset
+  function void build;
+    //trans=new();
+    $display("driver build task completes");
+  endfunction:build
+  task run;
+    $display("%d:time enter in driver",$time);
+    forever 
+     begin
+       transactor trans; 
+       gen2drv.get(trans);
+       @(posedge inf_vir.clk);
+       $display("%d:driver enters in posedge",$time,inf_vir.clk);
+        begin
+             `DRIV_MAC.data_in<=trans.data_in;
+             `DRIV_MAC.push<=trans.push;  
+             `DRIV_MAC.pop<=trans.pop;
+        end
+     
+        ->ended;
+       $display("%d:Driver Transaction completes",$time);
+     end
+   
+  endtask:run
+endclass:driver
