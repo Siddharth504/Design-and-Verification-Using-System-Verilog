@@ -1,7 +1,6 @@
 `define DRIV_MAC inf_vir.DRIVER.drv
 class driver;
   //variable is declared to count number of transactors
-  //event ready;
   //virtual interface is declared
   virtual inf inf_vir;
   mailbox gen2drv;
@@ -26,7 +25,6 @@ class driver;
     $display("%d:reset done of driver",$time);
  endtask:reset
   function void build;
-    //trans=new();
     $display("driver build task completes");
   endfunction:build
   task run;
