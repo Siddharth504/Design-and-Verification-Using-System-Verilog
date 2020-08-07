@@ -1,0 +1,32 @@
+class generator;
+  //declare transactor class
+  transactor tr;
+  //rand transactor tr;
+  //variable to number of times we are pushing in fifo
+  int  repeat_count;
+  // mailboxes to send transaction from generator to scoreboard and driver
+  mailbox gen2drv;
+  // event is declared
+  event ended;
+  //constructor
+  function new(mailbox gen2drv, event ended);
+    
+    this.gen2drv=gen2drv;
+    this.ended=ended;
+  endfunction
+  //function build
+  function void build;
+   //tr=new();
+    $display("generator build task completes");
+  endfunction:build
+   virtual task run();
+    repeat(repeat_count) 
+     begin
+        tr=new();
+        assert(tr.randomize());
+        gen2drv.put(tr);
+        @(ended);
+      end
+     $display("%d:generator run task completed",$time);
+  endtask:run
+endclass:generator
