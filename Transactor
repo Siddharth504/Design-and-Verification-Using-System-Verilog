@@ -1,0 +1,26 @@
+class transactor;
+  // declaring the transactor items
+     logic fifo_full,fifo_empty,err1,err2,err3;
+     logic [3:0] data_out;
+      randc bit[3:0] data_in;
+      randc bit push,pop;
+      constraint c {
+        pop inside{[0:1]};
+        push inside{[0:1]};
+                    }
+      //copy function
+  function transactor do_copy(transactor copy);  
+    this.data_in=copy.data_in;
+        this.push=copy.push;
+        this.pop=copy.pop;
+        this.data_out=copy.data_out;
+        this.err1=copy.err1;
+        this.err2=copy.err2;
+        this.err3=copy.err3;
+  endfunction
+      //copy function finishes
+  function void post_randomize();
+    $display("%d: after randomizing values in transaction",$time);
+    $display("push=%d,pop=%d,data_in=%d",push,pop,data_in);
+  endfunction
+endclass:transactor
