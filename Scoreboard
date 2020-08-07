@@ -1,0 +1,145 @@
+class scoreboard;
+  mailbox mon2scb;
+  transactor trans;
+  transactor tr;
+  bit pred_push;
+  bit pred_pop;
+  logic [3:0] pred_data_in;  
+  logic [3:0] pred_data_out;
+    bit pred_fifo_full;
+    bit pred_fifo_empty;
+    bit pred_err1;
+    bit pred_err2;
+    bit pred_err3;
+    int q[$];
+  event e1;
+  virtual inf inf_vir;
+covergroup covport;
+  coverpoint tr.pop; 
+  coverpoint tr.push ;
+ coverpoint tr.data_in;    
+  coverpoint pred_fifo_full;
+  coverpoint pred_fifo_empty;
+  coverpoint pred_err1;
+  coverpoint pred_err2;
+  coverpoint pred_err3;
+endgroup
+   function new(virtual inf inf_vir,mailbox mon2scb);
+     this.inf_vir=inf_vir; 
+     this.mon2scb=mon2scb;
+    covport=new;
+  endfunction
+  function void build;
+    $display("scoreboard build task completes");
+  endfunction:build
+  task reset;
+    wait(inf_vir.reset);
+    $display("%d:scoreboard reset starts",$time);
+    pred_data_in=0;
+    pred_data_out=0;
+    pred_fifo_full=0;
+    pred_fifo_empty=0;
+    wait(!inf_vir.reset);
+    $display("%d:scoreboard reset ends",$time);
+  endtask
+    task run;
+     forever
+        begin
+          mon2scb.get(trans);
+          tr=new();     
+          tr.do_copy(trans);
+          pred_push=tr.push;
+          if(tr.push&&tr.pop==1)
+            begin
+            pred_err1=1;
+          if(tr.push&&pred_fifo_full)
+              pred_err2=1;
+            else
+              pred_err2=0;
+          if(tr.pop&&pred_fifo_empty)
+                pred_err3=1;
+            else
+                pred_err3=0;
+              compare;
+            end
+          else
+           begin
+              pred_err1=0;
+              if(tr.push&&pred_fifo_full)
+                begin
+                  pred_err2=1; 
+                end
+             else
+               begin
+                 pred_err2=0; 
+                 if(tr.push==1)
+                   begin
+                      q.push_front(tr.data_in);
+                   end 
+               end
+             if(tr.pop&&pred_fifo_empty)
+                begin
+                  pred_err3=1;
+                end
+              else
+                begin
+                  pred_err3=0;
+                  if(tr.pop==1)
+                    begin
+                       pred_data_out=q.pop_back();
+                    end
+                end
+          if (q.size==4)
+            pred_fifo_full=1;
+          else
+            pred_fifo_full=0;
+          if (q.size==0)
+            pred_fifo_empty=1;
+          else
+            pred_fifo_empty=0;
+             compare;
+           end
+        end
+    endtask:run
+ task compare;
+   begin
+          if (pred_data_out==trans.data_out)
+            $display("Correct data output , pred_data_out= %d ,actual data_out=%d",pred_data_out,trans.data_out);
+            else
+              $display("Error in data output, pred_data_out= %d ,actual data_out=%d",pred_data_out,trans.data_out);
+////////////////////////////////////////////////////////////////////////////////////
+          if (pred_fifo_full!=trans.fifo_full)
+            $display("Error in Fifo full Signal-predicted fifo full signal =%d,actual fifo full signal =%d",pred_fifo_full,trans.fifo_full);
+            else
+              $display("No error in Fifo full Signal-predicted fifo full signal =%d,actual fifo full signal =%d",pred_fifo_full,trans.fifo_full);
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+          if (pred_fifo_empty!=trans.fifo_empty)
+            $display("Error in Fifo Empty Signal-predicted fifo empty signal =%d,actual fifo empty signal =%d",pred_fifo_empty,trans.fifo_empty);
+            else
+              $display("No Error in Fifo Empty Signal-predicted fifo empty signal =%d,actual fifo empty signal =%d",pred_fifo_empty,trans.fifo_empty );
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+          if(pred_err1==trans.err1)
+            $display("Corner case satisfied when push and pop are simultaneously on predicted error signal =%d,actual error signal =%d",pred_err1,trans.err1);
+            else
+              $display("Error in corner case  when push and pop simultaneously on err1 is not high:- predicted error signal =%d,actual error signal =%d",pred_err1,trans.err1);
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+          if(pred_err2==trans.err2)
+            $display("corner case satisfied :- push is given when fifo is full:-predicted error signal =%d,actual error signal =%d",pred_err2,trans.err2);
+            else
+              $display("Error in corner case :- push is given when fifo is full but Err2 is not high:-predicted error signal =%d,actual error signal =%d",pred_err2,trans.err2);
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+          if(pred_err3==trans.err3)
+            $display("corner case satisfy to check :-pop is given when fifo is empty:-predicted error signal =%d,actual error signal =%d",pred_err3,trans.err3);
+            else
+              $display("Error in corner case :- pop is given when fifo is empty but Err3 is not high predicted error signal =%d,actual error signal =%d",pred_err3,trans.err3);
+          $display("%d:run task exits in sbd",$time);
+     covport.sample();
+     $display("%d:push=%d,pop=%d,data_in=%d,fifofull=%d,fifoempty=%d,err1=%d,err2=%d,err3=%d",$time,tr.push,tr.pop,tr.data_in,pred_fifo_full,pred_fifo_empty,pred_err1,pred_err2,pred_err3);
+   end       
+   endtask:compare
+  task coverage;
+    begin
+      $display("Coverage Report =%0.2f",covport.get_inst_coverage());
+    end
+  endtask:coverage
+endclass:scoreboard
